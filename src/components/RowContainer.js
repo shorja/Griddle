@@ -20,13 +20,14 @@ const ComposedRowContainer = OriginalComponent => compose(
   pure,
   getContext({
     components: PropTypes.object,
+    selectors: PropTypes.object
   }),
   connect((state, props) => ({
-    columnIds: columnIdsSelector(state),
-    rowProperties: rowPropertiesSelector(state),
-    rowData: rowDataSelector(state, props),
-    className: classNamesForComponentSelector(state, 'Row'),
-    style: stylesForComponentSelector(state, 'Row'),
+    columnIds: props.selectors.columnIdsSelector(state),
+    rowProperties: props.selectors.rowPropertiesSelector(state),
+    rowData: props.selectors.rowDataSelector(state, props),
+    className: props.selectors.classNamesForComponentSelector(state, 'Row'),
+    style: props.selectors.stylesForComponentSelector(state, 'Row'),
   }),
     null,
     null,
