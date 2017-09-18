@@ -4,6 +4,7 @@ import { connect } from '../utils/griddleConnect';
 import compose from 'recompose/compose';
 import mapProps from 'recompose/mapProps';
 import getContext from 'recompose/getContext';
+import pure from 'recompose/pure';
 
 import {
   columnIdsSelector,
@@ -11,10 +12,12 @@ import {
   rowPropertiesSelector,
   classNamesForComponentSelector,
   stylesForComponentSelector,
+  doesRowNeedUpdate
 } from '../selectors/dataSelectors';
 import { valueOrResult } from '../utils/valueUtils';
 
 const ComposedRowContainer = OriginalComponent => compose(
+  pure,
   getContext({
     components: PropTypes.object,
   }),
@@ -24,7 +27,14 @@ const ComposedRowContainer = OriginalComponent => compose(
     rowData: rowDataSelector(state, props),
     className: classNamesForComponentSelector(state, 'Row'),
     style: stylesForComponentSelector(state, 'Row'),
-  })),
+  }),
+    null,
+    null,
+    {
+      pure: true, 
+      areStatesEqual: (prevState, nextState) => doesRowNeedUpdate(prevState, nextState)
+    }
+  ),
   mapProps(props => {
     const { components, rowProperties, className, ...otherProps } = props;
     return {
@@ -35,7 +45,7 @@ const ComposedRowContainer = OriginalComponent => compose(
   }),
 )(props => (
   <OriginalComponent
-    {...props}
+  {...props}
   />
 ));
 

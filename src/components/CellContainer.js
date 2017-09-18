@@ -4,13 +4,15 @@ import { connect } from '../utils/griddleConnect';
 import getContext from 'recompose/getContext';
 import mapProps from 'recompose/mapProps';
 import compose from 'recompose/compose';
+import pure from 'recompose/pure';
 
 import {
   customComponentSelector,
   cellValueSelector,
   cellPropertiesSelector,
   classNamesForComponentSelector,
-  stylesForComponentSelector
+  stylesForComponentSelector,
+  doesCellNeedUpdate
 } from '../selectors/dataSelectors';
 import { valueOrResult } from '../utils/valueUtils';
 
@@ -36,6 +38,7 @@ function getCellStyles(cellProperties, originalStyles) {
 }
 
 const ComposedCellContainer = OriginalComponent => compose(
+  pure,
   getContext({
     selectors: PropTypes.object,
   }),
@@ -47,7 +50,14 @@ const ComposedCellContainer = OriginalComponent => compose(
       className: classNamesForComponentSelector(state, 'Cell'),
       style: stylesForComponentSelector(state, 'Cell'),
     };
-  }),
+  },
+  null,
+  null,
+  {
+    pure: true, 
+    areStatesEqual: (prevState, nextState) => doesCellNeedUpdate(prevState, nextState)
+  }
+  ),
   mapProps(props => {
     return ({
     ...props.cellProperties.extraData,

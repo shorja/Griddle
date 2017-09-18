@@ -292,3 +292,53 @@ export const cellPropertiesSelector = (state, { columnId }) => {
 
   return (item && item.toJSON()) || {};
 };
+
+export const doesCellNeedUpdate = (() => {
+  let prevStateMemo = null;
+  let nextStateMemo = null;
+  let outputMemo = null;
+  return (prevState, nextState) => {
+    if (prevState !== prevStateMemo || nextState !== nextStateMemo) {
+      prevStateMemo = prevState;
+      nextStateMemo = nextState;
+      outputMemo = 
+        (
+          prevState.getIn(['data']) === nextState.getIn(['data'])
+        ) && (
+          prevState.getIn(['renderProperties']) === nextState.getIn(['renderProperties']) ||
+          prevState.getIn(['renderProperties', 'columnProperties']) === nextState.getIn(['renderProperties', 'columnProperties'])
+        )
+      return outputMemo
+    } else {
+      return outputMemo
+    }
+  }
+})();
+
+export const doesRowNeedUpdate = (() => {
+  let prevStateMemo = null;
+  let nextStateMemo = null;
+  let outputMemo = null;
+  return (prevState, nextState) => {
+    if (prevState !== prevStateMemo || nextState !== nextStateMemo) {
+      prevStateMemo = prevState;
+      nextStateMemo = nextState;
+      outputMemo = 
+        (
+          prevState.getIn(['data']) === nextState.getIn('data')
+        ) && (
+          prevState.get('renderProperties') === nextState.get('renderProperties') ||
+          prevState.getIn(['renderProperties', 'rowProperties']) == nextState.getIn(['renderProperties', 'rowProperties'])
+        ) && (
+          prevState.getIn(['styleConfig']) === nextState.getIn(['styleConfig']) ||
+          prevState.getIn(['styleConfig', 'classNames']) === nextState.getIn(['styleConfig', 'classNames'])
+        ) && (
+          prevState.getIn(['styleConfig']) === nextState.getIn(['styleConfig']) ||
+          prevState.getIn(['styleConfig', 'styles']) === nextState.getIn(['styleConfig', 'styles'])
+        )
+      return outputMemo
+    } else {
+      return outputMemo
+    }
+  }
+})();
