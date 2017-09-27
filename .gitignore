@@ -35,7 +35,9 @@ docs/html
 
 build/
 lib/
-dist/
+# for the all-features branch, include dist so that it can be included through npm as a tarball
+# this way we can avoid publishing this module
+# dist/
 storybook-static/
 
 *.tgz
