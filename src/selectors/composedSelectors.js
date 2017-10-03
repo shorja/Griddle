@@ -3,15 +3,48 @@ import { createSelector } from 'reselect';
 import _ from 'lodash';
 import MAX_SAFE_INTEGER from 'max-safe-integer'
 
-export const hasPreviousSelector = {
-  creator: ({currentPageSelector}) => {
-    return createSelector(
-      currentPageSelector,
-      (currentPage) => (currentPage > 1)
-    );
-  },
-  dependencies: ["currentPageSelector"]
+const griddleCreateSelector = (...args) => {
+  if (args.length < 2) {
+    throw new Error("Cannot create a selector with fewer than 2 arguments, must have at least on dependency and the selector function");
+  }
+  const dependencies = args.slice(0, args.length - 1);
+  for (let dependency of dependencies) {
+    if (typeof dependency !== "string") {
+      throw new Error("Args 0..n-1 must be strings");
+    }
+  }
+  const selector = args[args.length - 1];
+  if (typeof selector !== "function") {
+    throw new Error("Last argument must be a function");
+  }
+
+  return {
+    creator: (selectors) => {
+      const createSelectorFuncs = [];
+      for (let dependency of dependencies) {
+        createSelectorFuncs.push(selectors[dependency]);
+      }
+      createSelectorFuncs.push(selector);
+      return createSelector(...createSelectorFuncs);
+    },
+    dependencies
+  };
 };
+
+export const hasPreviousSelector = griddleCreateSelector(
+  "currentPageSelector",
+  (currentPage) => (currentPage > 1)
+);
+
+//export const hasPreviousSelector = {
+//  creator: ({currentPageSelector}) => {
+//    return createSelector(
+//      currentPageSelector,
+//      (currentPage) => (currentPage > 1)
+//    );
+//  },
+//  dependencies: ["currentPageSelector"]
+//};
 
 export const maxPageSelector = {
   creator: ({pageSizeSelector, recordCountSelector}) => {
