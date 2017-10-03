@@ -9,7 +9,7 @@
     "pagination",
     "sort"
   ],
-  "main": "dist/module/module.js",
+  "main": "dist/umd/griddle.js",
   "types": "dist/module/module.d.ts",
   "scripts": {
     "start": "start-storybook -p 6006",
