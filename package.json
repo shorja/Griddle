@@ -10,7 +10,7 @@
     "sort"
   ],
   "main": "dist/umd/griddle.js",
-  "types": "dist/module/module.d.ts",
+  "files": "dist",
   "scripts": {
     "start": "start-storybook -p 6006",
     "test": "ava",
