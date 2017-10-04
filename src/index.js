@@ -108,7 +108,7 @@ class Griddle extends Component {
     // selector dependency trees
     console.log("Parsing built-in selectors");
     const combinedSelectors = new Map();
-    const _baseSelectors = _.reduce(baseSelectors, (map, baseSelector, name) => {
+    _.forOwn(baseSelectors, (baseSelector, name) => {
       const selector = {
         name, 
         selector: baseSelector,
@@ -117,9 +117,7 @@ class Griddle extends Component {
         traversed: false
       };
       combinedSelectors.set(name, selector);
-      map.set(name, selector);
-      return map;
-    }, new Map());
+    });
 
     // STEP 2
     // ==========
@@ -135,7 +133,7 @@ class Griddle extends Component {
     // 'creator' will return the selector when it is run with the dependency selectors
     // 'dependencies' are the string names of the dependency selectors, these will be used to
     // build the tree of selectors
-    const _composedSelectors = _.reduce(composedSelectors, (map, composedSelector, name) => {
+    _.forOwn(composedSelectors, (composedSelector, name) => {
       const selector = {
         name,
         ...composedSelector,
@@ -144,9 +142,7 @@ class Griddle extends Component {
       };
       combinedSelectors.has(name) && console.log(`  Overriding existing selector named ${name}`);
       combinedSelectors.set(name, selector);
-      map.set(name, selector);
-      return map;
-    }, new Map());
+    });
 
     // STEP 3
     // ==========

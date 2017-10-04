@@ -28,10 +28,6 @@ var _forOwn2 = require('lodash/forOwn');
 
 var _forOwn3 = _interopRequireDefault(_forOwn2);
 
-var _reduce2 = require('lodash/reduce');
-
-var _reduce3 = _interopRequireDefault(_reduce2);
-
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -70,9 +66,9 @@ var _dataSelectors = require('./selectors/dataSelectors');
 
 var baseSelectors = _interopRequireWildcard(_dataSelectors);
 
-var _composedSelectors2 = require('./selectors/composedSelectors');
+var _composedSelectors = require('./selectors/composedSelectors');
 
-var composedSelectors = _interopRequireWildcard(_composedSelectors2);
+var composedSelectors = _interopRequireWildcard(_composedSelectors);
 
 var _compositionUtils = require('./utils/compositionUtils');
 
@@ -202,7 +198,7 @@ var Griddle = function (_Component) {
     // selector dependency trees
     console.log("Parsing built-in selectors");
     var combinedSelectors = new Map();
-    var _baseSelectors = (0, _reduce3.default)(baseSelectors, function (map, baseSelector, name) {
+    (0, _forOwn3.default)(baseSelectors, function (baseSelector, name) {
       var selector = {
         name: name,
         selector: baseSelector,
@@ -211,9 +207,7 @@ var Griddle = function (_Component) {
         traversed: false
       };
       combinedSelectors.set(name, selector);
-      map.set(name, selector);
-      return map;
-    }, new Map());
+    });
 
     // STEP 2
     // ==========
@@ -229,7 +223,7 @@ var Griddle = function (_Component) {
     // 'creator' will return the selector when it is run with the dependency selectors
     // 'dependencies' are the string names of the dependency selectors, these will be used to
     // build the tree of selectors
-    var _composedSelectors = (0, _reduce3.default)(composedSelectors, function (map, composedSelector, name) {
+    (0, _forOwn3.default)(composedSelectors, function (composedSelector, name) {
       var selector = _extends({
         name: name
       }, composedSelector, {
@@ -238,9 +232,7 @@ var Griddle = function (_Component) {
       });
       combinedSelectors.has(name) && console.log('  Overriding existing selector named ' + name);
       combinedSelectors.set(name, selector);
-      map.set(name, selector);
-      return map;
-    }, new Map());
+    });
 
     // STEP 3
     // ==========
