@@ -23,249 +23,323 @@ var _maxSafeInteger = require('max-safe-integer');
 
 var _maxSafeInteger2 = _interopRequireDefault(_maxSafeInteger);
 
+var _selectorUtils = require('../utils/selectorUtils');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-//const griddleCreateSelector = (...args) => {
-//  if (args.length < 2) {
-//    throw new Error("Cannot create a selector with fewer than 2 arguments, must have at least on dependency and the selector function");
-//  }
-//  const dependencies = args.slice(0, args.length - 1);
-//  for (let dependency of dependencies) {
-//    if (typeof dependency !== "string") {
-//      throw new Error("Args 0..n-1 must be strings");
-//    }
-//  }
-//  const selector = args[args.length - 1];
-//  if (typeof selector !== "function") {
-//    throw new Error("Last argument must be a function");
-//  }
-//
-//  return {
-//    creator: (selectors) => {
-//      const createSelectorFuncs = [];
-//      for (let dependency of dependencies) {
-//        createSelectorFuncs.push(selectors[dependency]);
-//      }
-//      createSelectorFuncs.push(selector);
-//      return createSelector(...createSelectorFuncs);
-//    },
-//    dependencies
-//  };
+var hasPreviousSelector = exports.hasPreviousSelector = (0, _selectorUtils.griddleCreateSelector)("currentPageSelector", function (currentPage) {
+  return currentPage > 1;
+});
+
+//export const hasPreviousSelector = {
+//  creator: ({currentPageSelector}) => {
+//    return createSelector(
+//      currentPageSelector,
+//      (currentPage) => (currentPage > 1)
+//    );
+//  },
+//  dependencies: ["currentPageSelector"]
 //};
+
+var maxPageSelector = exports.maxPageSelector = (0, _selectorUtils.griddleCreateSelector)("pageSizeSelector", "recordCountSelector", function (pageSize, recordCount) {
+  var calc = recordCount / pageSize;
+  var result = calc > Math.floor(calc) ? Math.floor(calc) + 1 : Math.floor(calc);
+  return (0, _isFinite3.default)(result) ? result : 1;
+});
+
+//export const maxPageSelector = {
+//  creator: ({pageSizeSelector, recordCountSelector}) => {
+//    return createSelector(
+//      pageSizeSelector,
+//      recordCountSelector,
+//      (pageSize, recordCount) => {
+//        const calc = recordCount / pageSize;
+//        const result =  calc > Math.floor(calc) ? Math.floor(calc) + 1 : Math.floor(calc);
+//        return _.isFinite(result) ? result : 1;
+//      }
+//    );
+//  },
+//  dependencies: ["pageSizeSelector", "recordCountSelector"]
+//};
+
+var hasNextSelector = exports.hasNextSelector = (0, _selectorUtils.griddleCreateSelector)("currentPageSelector", "maxPageSelector", function (currentPage, maxPage) {
+  return currentPage < maxPage;
+});
+
+//export const hasNextSelector = { 
+//  creator: ({currentPageSelector, maxPageSelector}) => {
+//    return createSelector(
+//      currentPageSelector,
+//      maxPageSelector,
+//      (currentPage, maxPage) => {
+//        return currentPage < maxPage;
+//      }
+//    );
+//  },
+//  dependencies: ["currentPageSelector", "maxPageSelector"]
+//};
+
+var allColumnsSelector = exports.allColumnsSelector = (0, _selectorUtils.griddleCreateSelector)("dataSelector", "renderPropertiesSelector", function (data, renderProperties) {
+  var dataColumns = !data || data.size === 0 ? [] : data.get(0).keySeq().toJSON();
+
+  var columnPropertyColumns = renderProperties && renderProperties.size > 0 ?
+  // TODO: Make this not so ugly
+  Object.keys(renderProperties.get('columnProperties').toJSON()) : [];
+
+  return (0, _union3.default)(dataColumns, columnPropertyColumns);
+});
+
+//export const allColumnsSelector = {
+//  creator: ({dataSelector, renderPropertiesSelector}) => {
+//    return createSelector(
+//      dataSelector,
+//      renderPropertiesSelector,
+//      (data, renderProperties) => {
+//        const dataColumns = !data || data.size === 0 ?
+//          [] :
+//          data.get(0).keySeq().toJSON();
 //
-//export const hasPreviousSelector = griddleCreateSelector(
-//  "currentPageSelector",
-//  (currentPage) => (currentPage > 1)
-//);
+//        const columnPropertyColumns = (renderProperties && renderProperties.size > 0) ?
+//          // TODO: Make this not so ugly
+//          Object.keys(renderProperties.get('columnProperties').toJSON()) :
+//          [];
+//
+//        return _.union(dataColumns, columnPropertyColumns);
+//      }
+//    );
+//  },
+//  dependencies: ["dataSelector", "renderPropertiesSelector"]
+//};
 
-var hasPreviousSelector = exports.hasPreviousSelector = {
-  creator: function creator(_ref) {
-    var currentPageSelector = _ref.currentPageSelector;
+var sortedColumnPropertiesSelector = exports.sortedColumnPropertiesSelector = (0, _selectorUtils.griddleCreateSelector)("renderPropertiesSelector", function (renderProperties) {
+  return renderProperties && renderProperties.get('columnProperties') && renderProperties.get('columnProperties').size !== 0 ? renderProperties.get('columnProperties').sortBy(function (col) {
+    return col && col.get('order') || _maxSafeInteger2.default;
+  }) : null;
+});
 
-    return (0, _reselect.createSelector)(currentPageSelector, function (currentPage) {
-      return currentPage > 1;
-    });
-  },
-  dependencies: ["currentPageSelector"]
-};
+//export const sortedColumnPropertiesSelector = {
+//  creator: ({renderPropertiesSelector}) => {
+//    return createSelector(
+//      renderPropertiesSelector,
+//      (renderProperties) => (
+//        renderProperties && renderProperties.get('columnProperties') && renderProperties.get('columnProperties').size !== 0 ?
+//        renderProperties.get('columnProperties')
+//        .sortBy(col => (col && col.get('order'))||MAX_SAFE_INTEGER) :
+//        null
+//      )
+//    );
+//  },
+//  dependencies: ["renderPropertiesSelector"]
+//};
 
-var maxPageSelector = exports.maxPageSelector = {
-  creator: function creator(_ref2) {
-    var pageSizeSelector = _ref2.pageSizeSelector,
-        recordCountSelector = _ref2.recordCountSelector;
+var metaDataColumnsSelector = exports.metaDataColumnsSelector = (0, _selectorUtils.griddleCreateSelector)("sortedColumnPropertiesSelector", function (sortedColumnProperties) {
+  return sortedColumnProperties ? sortedColumnProperties.filter(function (c) {
+    return c.get('isMetadata');
+  }).keySeq().toJSON() : [];
+});
 
-    return (0, _reselect.createSelector)(pageSizeSelector, recordCountSelector, function (pageSize, recordCount) {
-      var calc = recordCount / pageSize;
-      var result = calc > Math.floor(calc) ? Math.floor(calc) + 1 : Math.floor(calc);
-      return (0, _isFinite3.default)(result) ? result : 1;
-    });
-  },
-  dependencies: ["pageSizeSelector", "recordCountSelector"]
-};
+//export const metaDataColumnsSelector = {
+//  creator: ({sortedColumnPropertiesSelector}) => {
+//    return createSelector(
+//      sortedColumnPropertiesSelector,
+//      (sortedColumnProperties) => (
+//        sortedColumnProperties ? sortedColumnProperties
+//        .filter(c => c.get('isMetadata'))
+//        .keySeq()
+//        .toJSON() :
+//        []
+//      )
+//    );
+//  },
+//  dependencies: ["sortedColumnPropertiesSelector"]
+//};
 
-var hasNextSelector = exports.hasNextSelector = {
-  creator: function creator(_ref3) {
-    var currentPageSelector = _ref3.currentPageSelector,
-        maxPageSelector = _ref3.maxPageSelector;
+var visibleColumnsSelector = exports.visibleColumnsSelector = (0, _selectorUtils.griddleCreateSelector)("sortedColumnPropertiesSelector", "allColumnsSelector", function (sortedColumnProperties, allColumns) {
+  return sortedColumnProperties ? sortedColumnProperties.filter(function (c) {
+    var isVisible = c.get('visible') || c.get('visible') === undefined;
+    var isMetadata = c.get('isMetadata');
+    return isVisible && !isMetadata;
+  }).keySeq().toJSON() : allColumns;
+});
 
-    return (0, _reselect.createSelector)(currentPageSelector, maxPageSelector, function (currentPage, maxPage) {
-      return currentPage < maxPage;
-    });
-  },
-  dependencies: ["currentPageSelector", "maxPageSelector"]
-};
+//export const visibleColumnsSelector = {
+//  creator: ({sortedColumnPropertiesSelector, allColumnsSelector}) => {
+//    return createSelector(
+//      sortedColumnPropertiesSelector,
+//      allColumnsSelector,
+//      (sortedColumnProperties, allColumns) => (
+//        sortedColumnProperties ? sortedColumnProperties
+//        .filter(c => {
+//          const isVisible = c.get('visible') || c.get('visible') === undefined;
+//          const isMetadata = c.get('isMetadata');
+//          return isVisible && !isMetadata;
+//        })
+//        .keySeq()
+//        .toJSON() :
+//        allColumns
+//      )
+//    );
+//  },
+//  dependencies: ["sortedColumnPropertiesSelector", "allColumnsSelector"]
+//};
 
-var allColumnsSelector = exports.allColumnsSelector = {
-  creator: function creator(_ref4) {
-    var dataSelector = _ref4.dataSelector,
-        renderPropertiesSelector = _ref4.renderPropertiesSelector;
+var visibleColumnPropertiesSelector = exports.visibleColumnPropertiesSelector = (0, _selectorUtils.griddleCreateSelector)("visibleColumnsSelector", "renderPropertiesSelector", function () {
+  var visibleColumns = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var renderProperties = arguments[1];
+  return visibleColumns.map(function (c) {
+    var columnProperty = renderProperties.getIn(['columnProperties', c]);
+    return columnProperty && columnProperty.toJSON() || { id: c };
+  });
+});
 
-    return (0, _reselect.createSelector)(dataSelector, renderPropertiesSelector, function (data, renderProperties) {
-      var dataColumns = !data || data.size === 0 ? [] : data.get(0).keySeq().toJSON();
+//export const visibleColumnPropertiesSelector = {
+//  creator: ({visibleColumnsSelector, renderPropertiesSelector}) => {
+//    return createSelector(
+//      visibleColumnsSelector,
+//      renderPropertiesSelector,
+//      (visibleColumns=[], renderProperties) => (
+//        visibleColumns.map(c => {
+//          const columnProperty = renderProperties.getIn(['columnProperties', c]);
+//          return (columnProperty && columnProperty.toJSON()) || { id: c }
+//        })
+//      )
+//    );
+//  },
+//  dependencies: ["visibleColumnsSelector", "renderPropertiesSelector"]
+//};
 
-      var columnPropertyColumns = renderProperties && renderProperties.size > 0 ?
-      // TODO: Make this not so ugly
-      Object.keys(renderProperties.get('columnProperties').toJSON()) : [];
+var hiddenColumnsSelector = exports.hiddenColumnsSelector = (0, _selectorUtils.griddleCreateSelector)("visibleColumnsSelector", "allColumnsSelector", "metaDataColumnsSelector", function (visibleColumns, allColumns, metaDataColumns) {
+  var removeColumns = [].concat(_toConsumableArray(visibleColumns), _toConsumableArray(metaDataColumns));
 
-      return (0, _union3.default)(dataColumns, columnPropertyColumns);
-    });
-  },
-  dependencies: ["dataSelector", "renderPropertiesSelector"]
-};
+  return allColumns.filter(function (c) {
+    return removeColumns.indexOf(c) === -1;
+  });
+});
 
-var sortedColumnPropertiesSelector = exports.sortedColumnPropertiesSelector = {
-  creator: function creator(_ref5) {
-    var renderPropertiesSelector = _ref5.renderPropertiesSelector;
+//export const hiddenColumnsSelector = {
+//  creator: ({visibleColumnsSelector, allColumnsSelector, metaDataColumnsSelector}) => {
+//    return createSelector(
+//      visibleColumnsSelector,
+//      allColumnsSelector,
+//      metaDataColumnsSelector,
+//      (visibleColumns, allColumns, metaDataColumns) => {
+//        const removeColumns = [...visibleColumns, ...metaDataColumns];
+//
+//        return allColumns.filter(c => removeColumns.indexOf(c) === -1);
+//      }
+//    );
+//  },
+//  dependencies: ["visibleColumnsSelector", "allColumnsSelector", "metaDataColumnsSelector"]
+//};
 
-    return (0, _reselect.createSelector)(renderPropertiesSelector, function (renderProperties) {
-      return renderProperties && renderProperties.get('columnProperties') && renderProperties.get('columnProperties').size !== 0 ? renderProperties.get('columnProperties').sortBy(function (col) {
-        return col && col.get('order') || _maxSafeInteger2.default;
-      }) : null;
-    });
-  },
-  dependencies: ["renderPropertiesSelector"]
-};
+var hiddenColumnPropertiesSelector = exports.hiddenColumnPropertiesSelector = (0, _selectorUtils.griddleCreateSelector)("hiddenColumnsSelector", "renderPropertiesSelector", function () {
+  var hiddenColumns = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var renderProperties = arguments[1];
+  return hiddenColumns.map(function (c) {
+    var columnProperty = renderProperties.getIn(['columnProperties', c]);
 
-var metaDataColumnsSelector = exports.metaDataColumnsSelector = {
-  creator: function creator(_ref6) {
-    var sortedColumnPropertiesSelector = _ref6.sortedColumnPropertiesSelector;
+    return columnProperty && columnProperty.toJSON() || { id: c };
+  });
+});
 
-    return (0, _reselect.createSelector)(sortedColumnPropertiesSelector, function (sortedColumnProperties) {
-      return sortedColumnProperties ? sortedColumnProperties.filter(function (c) {
-        return c.get('isMetadata');
-      }).keySeq().toJSON() : [];
-    });
-  },
-  dependencies: ["sortedColumnPropertiesSelector"]
-};
+//export const hiddenColumnPropertiesSelector = {
+//  creator: ({hiddenColumnsSelector, renderPropertiesSelector}) => {
+//    return createSelector(
+//      hiddenColumnsSelector,
+//      renderPropertiesSelector,
+//      (hiddenColumns=[], renderProperties) => (
+//        hiddenColumns.map(c => {
+//          const columnProperty = renderProperties.getIn(['columnProperties', c]);
+//
+//          return (columnProperty && columnProperty.toJSON()) || { id: c }
+//        })
+//      )
+//    );
+//  },
+//  dependencies: ["hiddenColumnsSelector", "renderPropertiesSelector"]
+//};
 
-var visibleColumnsSelector = exports.visibleColumnsSelector = {
-  creator: function creator(_ref7) {
-    var sortedColumnPropertiesSelector = _ref7.sortedColumnPropertiesSelector,
-        allColumnsSelector = _ref7.allColumnsSelector;
+var columnIdsSelector = exports.columnIdsSelector = (0, _selectorUtils.griddleCreateSelector)("renderPropertiesSelector", "visibleColumnsSelector", function (renderProperties, visibleColumns) {
+  var offset = 1000;
+  // TODO: Make this better -- This is pretty inefficient
+  return visibleColumns.map(function (k, index) {
+    return {
+      id: renderProperties.getIn(['columnProperties', k, 'id']) || k,
+      order: renderProperties.getIn(['columnProperties', k, 'order']) || offset + index
+    };
+  }).sort(function (first, second) {
+    return first.order - second.order;
+  }).map(function (item) {
+    return item.id;
+  });
+});
 
-    return (0, _reselect.createSelector)(sortedColumnPropertiesSelector, allColumnsSelector, function (sortedColumnProperties, allColumns) {
-      return sortedColumnProperties ? sortedColumnProperties.filter(function (c) {
-        var isVisible = c.get('visible') || c.get('visible') === undefined;
-        var isMetadata = c.get('isMetadata');
-        return isVisible && !isMetadata;
-      }).keySeq().toJSON() : allColumns;
-    });
-  },
-  dependencies: ["sortedColumnPropertiesSelector", "allColumnsSelector"]
-};
+//export const columnIdsSelector = {
+//  creator: ({renderPropertiesSelector, visibleColumnsSelector}) => {
+//    return createSelector(
+//      renderPropertiesSelector,
+//      visibleColumnsSelector,
+//      (renderProperties, visibleColumns) => {
+//        const offset = 1000;
+//        // TODO: Make this better -- This is pretty inefficient
+//        return visibleColumns
+//          .map((k, index) => ({
+//            id: renderProperties.getIn(['columnProperties', k, 'id']) || k,
+//            order: renderProperties.getIn(['columnProperties', k, 'order']) || offset + index
+//          }))
+//          .sort((first, second) => first.order - second.order)
+//          .map(item => item.id);
+//      }
+//    );
+//  },
+//  dependencies: ["renderPropertiesSelector", "visibleColumnsSelector"]
+//};
 
-var visibleColumnPropertiesSelector = exports.visibleColumnPropertiesSelector = {
-  creator: function creator(_ref8) {
-    var visibleColumnsSelector = _ref8.visibleColumnsSelector,
-        renderPropertiesSelector = _ref8.renderPropertiesSelector;
+var columnTitlesSelector = exports.columnTitlesSelector = (0, _selectorUtils.griddleCreateSelector)("columnIdsSelector", "renderPropertiesSelector", function (columnIds, renderProperties) {
+  return columnIds.map(function (k) {
+    return renderProperties.getIn(['columnProperties', k, 'title']) || k;
+  });
+});
 
-    return (0, _reselect.createSelector)(visibleColumnsSelector, renderPropertiesSelector, function () {
-      var visibleColumns = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-      var renderProperties = arguments[1];
-      return visibleColumns.map(function (c) {
-        var columnProperty = renderProperties.getIn(['columnProperties', c]);
-        return columnProperty && columnProperty.toJSON() || { id: c };
-      });
-    });
-  },
-  dependencies: ["visibleColumnsSelector", "renderPropertiesSelector"]
-};
+//export const columnTitlesSelector = {
+//  creator: ({columnIdsSelector, renderPropertiesSelector}) => {
+//    return createSelector(
+//      columnIdsSelector,
+//      renderPropertiesSelector,
+//      (columnIds, renderProperties) => columnIds.map(k => renderProperties.getIn(['columnProperties', k, 'title']) || k)
+//    );
+//  },
+//  dependencies: ["columnIdsSelector", "renderPropertiesSelector"]
+//};
 
-var hiddenColumnsSelector = exports.hiddenColumnsSelector = {
-  creator: function creator(_ref9) {
-    var visibleColumnsSelector = _ref9.visibleColumnsSelector,
-        allColumnsSelector = _ref9.allColumnsSelector,
-        metaDataColumnsSelector = _ref9.metaDataColumnsSelector;
+var visibleRowIdsSelector = exports.visibleRowIdsSelector = (0, _selectorUtils.griddleCreateSelector)("dataSelector", function (currentPageData) {
+  return currentPageData ? currentPageData.map(function (c) {
+    return c.get('griddleKey');
+  }) : new _immutable2.default.List();
+});
 
-    return (0, _reselect.createSelector)(visibleColumnsSelector, allColumnsSelector, metaDataColumnsSelector, function (visibleColumns, allColumns, metaDataColumns) {
-      var removeColumns = [].concat(_toConsumableArray(visibleColumns), _toConsumableArray(metaDataColumns));
+//export const visibleRowIdsSelector = {
+//  creator: ({dataSelector}) => {
+//    return createSelector(
+//      dataSelector,
+//      currentPageData => currentPageData ? currentPageData.map(c => c.get('griddleKey')) : new Immutable.List()
+//    );
+//  },
+//  dependencies: ["dataSelector"]
+//};
 
-      return allColumns.filter(function (c) {
-        return removeColumns.indexOf(c) === -1;
-      });
-    });
-  },
-  dependencies: ["visibleColumnsSelector", "allColumnsSelector", "metaDataColumnsSelector"]
-};
+var visibleRowCountSelector = exports.visibleRowCountSelector = (0, _selectorUtils.griddleCreateSelector)("visibleRowIdsSelector", function (visibleRowIds) {
+  return visibleRowIds.size;
+});
 
-var hiddenColumnPropertiesSelector = exports.hiddenColumnPropertiesSelector = {
-  creator: function creator(_ref10) {
-    var hiddenColumnsSelector = _ref10.hiddenColumnsSelector,
-        renderPropertiesSelector = _ref10.renderPropertiesSelector;
-
-    return (0, _reselect.createSelector)(hiddenColumnsSelector, renderPropertiesSelector, function () {
-      var hiddenColumns = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-      var renderProperties = arguments[1];
-      return hiddenColumns.map(function (c) {
-        var columnProperty = renderProperties.getIn(['columnProperties', c]);
-
-        return columnProperty && columnProperty.toJSON() || { id: c };
-      });
-    });
-  },
-  dependencies: ["hiddenColumnsSelector", "renderPropertiesSelector"]
-};
-
-var columnIdsSelector = exports.columnIdsSelector = {
-  creator: function creator(_ref11) {
-    var renderPropertiesSelector = _ref11.renderPropertiesSelector,
-        visibleColumnsSelector = _ref11.visibleColumnsSelector;
-
-    return (0, _reselect.createSelector)(renderPropertiesSelector, visibleColumnsSelector, function (renderProperties, visibleColumns) {
-      var offset = 1000;
-      // TODO: Make this better -- This is pretty inefficient
-      return visibleColumns.map(function (k, index) {
-        return {
-          id: renderProperties.getIn(['columnProperties', k, 'id']) || k,
-          order: renderProperties.getIn(['columnProperties', k, 'order']) || offset + index
-        };
-      }).sort(function (first, second) {
-        return first.order - second.order;
-      }).map(function (item) {
-        return item.id;
-      });
-    });
-  },
-  dependencies: ["renderPropertiesSelector", "visibleColumnsSelector"]
-};
-
-var columnTitlesSelector = exports.columnTitlesSelector = {
-  creator: function creator(_ref12) {
-    var columnIdsSelector = _ref12.columnIdsSelector,
-        renderPropertiesSelector = _ref12.renderPropertiesSelector;
-
-    return (0, _reselect.createSelector)(columnIdsSelector, renderPropertiesSelector, function (columnIds, renderProperties) {
-      return columnIds.map(function (k) {
-        return renderProperties.getIn(['columnProperties', k, 'title']) || k;
-      });
-    });
-  },
-  dependencies: ["columnIdsSelector", "renderPropertiesSelector"]
-};
-
-var visibleRowIdsSelector = exports.visibleRowIdsSelector = {
-  creator: function creator(_ref13) {
-    var dataSelector = _ref13.dataSelector;
-
-    return (0, _reselect.createSelector)(dataSelector, function (currentPageData) {
-      return currentPageData ? currentPageData.map(function (c) {
-        return c.get('griddleKey');
-      }) : new _immutable2.default.List();
-    });
-  },
-  dependencies: ["dataSelector"]
-};
-
-var visibleRowCountSelector = exports.visibleRowCountSelector = {
-  creator: function creator(_ref14) {
-    var visibleRowIdsSelector = _ref14.visibleRowIdsSelector;
-
-    return (0, _reselect.createSelector)(visibleRowIdsSelector, function (visibleRowIds) {
-      return visibleRowIds.size;
-    });
-  },
-  dependencies: ["visibleRowIdsSelector"]
-};
+//export const visibleRowCountSelector = {
+//  creator: ({visibleRowIdsSelector}) => {
+//    return createSelector(
+//      visibleRowIdsSelector,
+//      (visibleRowIds) => visibleRowIds.size
+//    );
+//  },
+//  dependencies: ["visibleRowIdsSelector"]
+//};
