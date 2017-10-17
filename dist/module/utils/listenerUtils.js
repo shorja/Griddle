@@ -29,7 +29,7 @@ var StoreListener = exports.StoreListener = function StoreListener(store) {
         // if no name is provided, do nothing
         name && _this.removeListener(name);
         var unsubscribe = function () {
-            var oldState = void 0;
+            var oldState = _this.store.getState();
             return _this.store.subscribe(function () {
                 var newState = _this.store.getState();
                 listener(oldState, newState, _extends({}, otherArgs));

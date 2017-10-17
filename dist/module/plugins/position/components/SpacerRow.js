@@ -97,6 +97,7 @@ var spacerRow = (0, _compose2.default)((0, _getContext2.default)({
   placement: _propTypes2.default.string,
   spacerHeight: _propTypes2.default.number
 }, _class.defaultProps = {
-  placement: 'top' }, _temp));
+  placement: 'top'
+}, _temp));
 
 exports.default = spacerRow;

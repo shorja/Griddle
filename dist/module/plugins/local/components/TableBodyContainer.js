@@ -47,11 +47,7 @@ var ComposedTableBodyContainer = function ComposedTableBodyContainer(OriginalCom
       className: (0, _localSelectors.classNamesForComponentSelector)(state, 'TableBody'),
       style: (0, _localSelectors.stylesForComponentSelector)(state, 'TableBody')
     };
-  })
-  // withHandlers({
-  //   Row: props => props.components.Row
-  // })
-  )(function (_ref) {
+  }))(function (_ref) {
     var Row = _ref.Row,
         visibleRowIds = _ref.visibleRowIds,
         style = _ref.style,
