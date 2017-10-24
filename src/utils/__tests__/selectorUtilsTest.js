@@ -22,41 +22,6 @@ test('createSelector with final results function arg not of function type', (ass
   }, Error);
 });
 
-test('createSelector with 1 selector function arg and 1 results function arg', (assert) => {
-  const selector = createSelector(
-    (state) => state,
-    (state) => state
-  );
-
-  assert.is(typeof selector, "function");
-  assert.is(selector.dependencies, undefined);
-});
-
-test('createSelector with 1 selector dependency and 1 results function', (assert) => {
-  const selector = createSelector(
-    "someDependency",
-    (a) => null
-  );
-
-  assert.is(typeof selector, "function");
-  assert.is(typeof selector.dependencies, "object");
-  assert.is(selector.dependencies.length, 1);
-  assert.is(selector.dependencies[0], "someDependency");
-});
-
-test('createSelector with 1 function dependency, 1 selector dependency, and 1 results function', (assert) => {
-  const selector = createSelector(
-    (state) => state,
-    "someDependency",
-    (state, x) => null
-  );
-
-  assert.is(typeof selector, "function");
-  assert.is(typeof selector.dependencies, "object");
-  assert.is(selector.dependencies.length, 1);
-  assert.is(selector.dependencies[0], "someDependency");
-});
-
 test('createSelector with a non string or function argument for one of the first n - 1 args', (assert) => {
   const error = assert.throws(() => {
     createSelector(
@@ -66,44 +31,135 @@ test('createSelector with a non string or function argument for one of the first
   }, Error);
 });
 
-test('createSelector with 1 selector dependency and 1 results function, ' +
-  'then call the returned generator function with valid resolved dependencies', (assert) => {
-    const resolvedDependencies = {
-      someDependency: () => 42
-    };
+test('createSelector, 1 selector function arg, create only', (assert) => {
+  const selector = createSelector(
+    () => 20,
+    (a) => a
+  );
 
-    const selector = createSelector(
-      "someDependency",
-      (x) => x
-    )(resolvedDependencies);
+  assert.is(typeof selector, "function");
 
-    assert.is(selector(), 42);
-  });
+  assert.is(selector.resolved, false);
+  assert.is(typeof selector.resolve, "function");
+  assert.is(typeof selector.resolveSelfFromSelector, "function");
+  assert.is(typeof selector.factory, "function");
 
-test('createSelector with 1 selector function, 1 selector dependency, and 1 results function ' +
-  'then call the returned generator function with valid resolved dependencies', (assert) => {
-    const someFunction = () => 10;
+  assert.is(typeof selector.dependencyNames, "object");
+  assert.is(selector.dependencyNames.length, 0);
 
-    const resolvedDependencies = {
-      someDependency: () => 42
-    };
+  // 'private' API
+  assert.is(typeof selector._dependencies, "object");
+  assert.is(typeof selector._selector, "function");
 
-    const selector = createSelector(
-      someFunction,
-      "someDependency",
-      (x, y) => x * y
-    )(resolvedDependencies);
+  // unresolved selector should return undefined when called
+  assert.is(selector(), undefined);
+});
 
-    assert.is(selector(), 420);
-  });
+test('createSelector, 1 selector func arg, create, resolve, then call', (t) => {
+  const selector = createSelector(
+    () => 20,
+    (a) => a
+  );
+  
+  selector.resolve({});
 
-test('createSelector with 1 selector dependency, and 1 results function' +
-  'then call the returned generator function WITHOUT valid resolved dependencies', (assert) => {
-    const error = assert.throws(() => {
-      createSelector(
+  t.is(typeof selector, "function");
+  t.is(selector.resolved, true);
+  t.is(selector(), 20);
+});
+
+test('createSelector, 1 selector dependency, create only', (assert) => {
+  const selector = createSelector(
+    "someDependency",
+    (a) => null
+  );
+
+  // an unresolved selector
+  // sanity check the API to ensure it exists
+  assert.is(typeof selector, "function");
+
+  assert.is(selector.resolved, false);
+  assert.is(typeof selector.resolve, "function");
+  assert.is(typeof selector.resolveSelfFromSelector, "function");
+  assert.is(typeof selector.factory, "function");
+
+  assert.is(typeof selector.dependencyNames, "object");
+  assert.is(selector.dependencyNames.length, 1);
+  assert.is(selector.dependencyNames[0], "someDependency");
+
+  // 'private' API
+  assert.is(typeof selector._dependencies, "object");
+  assert.is(typeof selector._selector, "function");
+
+  // unresolved selector should return undefined
+  assert.is(selector(), undefined);
+});
+
+test('createSelector, 1 selector dependency, create, resolve, call', (t) => {
+  const simpleDependencyA = () => 10;
+  const resolvedDependencies = {
+    simpleDependencyA
+  }
+  const selector = createSelector(
+    "simpleDependencyA",
+    (a) => a * 2
+  )
+  selector.resolve(resolvedDependencies);
+
+  t.is(typeof selector, "function");
+  t.is(selector.resolved, true);
+  t.is(selector(), 20);
+});
+
+test('createSelector, 1 function dependency, 1 selector dependency, create only', (t) => {
+  const selector = createSelector(
+    () => 20,
+    "someDependency",
+    (a, b) => a + b
+  );
+
+  t.is(typeof selector, "function");
+
+  t.is(selector.resolved, false);
+  t.is(typeof selector.resolve, "function");
+  t.is(typeof selector.resolveSelfFromSelector, "function");
+  t.is(typeof selector.factory, "function");
+
+  t.is(typeof selector.dependencyNames, "object");
+  t.is(selector.dependencyNames.length, 1);
+  t.is(selector.dependencyNames[0], "someDependency");
+
+  t.is(typeof selector._dependencies, "object");
+  t.is(typeof selector._selector, "function");
+
+  t.is(selector(), undefined);
+});
+
+test('createSelector, 1 function dependency, 1 selector dependency, create, resolve, call', (t) => {
+  const simpleDependencyA = () => 20;
+  const resolvedDependencies = {
+    simpleDependencyA
+  };
+  const selector = createSelector(
+    () => 2,
+    'simpleDependencyA',
+    (a, b) => a * b
+  );
+
+  selector.resolve(resolvedDependencies);
+
+  t.is(typeof selector, "function");
+  t.is(selector.resolved, true);
+  t.is(selector(), 40);
+});
+
+test('createSelector, 1 selector dependency, create, resolve with invalid dependencies', (t) => {
+    const error = t.throws(() => {
+      const selector = createSelector(
         "someDependency",
         (x) => x
-      )({});
+      );
+      selector.resolve({});
     }, Error);
   });
 
@@ -245,15 +301,7 @@ test('name me', (assert) => {
   // a selector created by reselect's createSelector
   assert.is(plugin0.selectors.simpleSelectorA(), 10);
   assert.is(plugin0.selectors.simpleSelectorB(), 2);
-  // this selector was declared using selector function arguments
-  // instead of selector dependency arguments, this means it
-  // will NOT be overridden and it should keep its original
-  // behaviour. Note that only the function in the PLUGIN
-  // maintains this behaviour, the function returned in
-  // flattenedSelectors uses the overridden dependencySelector1
-  // from plugin1 as it was the most recently declared selector
-  assert.is(plugin0.selectors.dependencySelector1(), 20);
-
+  assert.is(plugin0.selectors.dependencySelector1(), 12);
   assert.is(plugin1.selectors.dependencySelector1(), 12);
 });
 
@@ -332,46 +380,4 @@ test('composeSelectors called with mixed selector function and selector dependen
 
   assert.is(plugin1.selectors.simpleSelectorA(), 40);
   assert.is(plugin1.selectors.simpleSelectorB(), 1);
-});
-
-test('name me', (assert) => {
-  const plugin0 = {
-    selectors: {
-      simpleSelectorA: () => 10,
-      simpleSelectorB: () => 2,
-      dependencySelector1: createSelector(
-        'simpleSelectorA',
-        'simpleSelectorB',
-        (x, y) => x * y
-      )
-    }
-  }
-
-  const flattenedSelectors = composeSelectors([plugin0]);
-
-  const createdDependencySelector1 = plugin0.selectors.dependencySelector1.factory();
-
-  assert.is(typeof flattenedSelectors, "object");
-  assert.is(Object.keys(flattenedSelectors).length, 3);
-  assert.true(flattenedSelectors.hasOwnProperty("simpleSelectorA"));
-  assert.true(flattenedSelectors.hasOwnProperty("simpleSelectorB"));
-  assert.true(flattenedSelectors.hasOwnProperty("dependencySelector1"));
-  assert.is(flattenedSelectors.dependencySelector1(), 20);
-  // this is a crucial test, the composeSelectors function must also trigger
-  // the first run of createSelector's returned selector generator which
-  // changes its behaviour. From now on this function will act like 
-  // a selector created by reselect's createSelector
-  assert.is(plugin0.selectors.simpleSelectorA(), 10);
-  assert.is(plugin0.selectors.simpleSelectorB(), 2);
-  assert.is(plugin0.selectors.dependencySelector1(), 20);
-
-  assert.is(plugin0.selectors.dependencySelector1.factory()(), 20);
-  assert.is(plugin0.selectors.dependencySelector1(), 20);
-  assert.is(flattenedSelectors.dependencySelector1.factory()(), 20);
-  assert.is(flattenedSelectors.dependencySelector1(), 20);
-
-  assert.is(flattenedSelectors.dependencySelector1.factory({simpleSelectorA: () => 30})(), 60);
-  assert.is(flattenedSelectors.dependencySelector1(), 20);
-  assert.is(plugin0.selectors.dependencySelector1.factory({simpleSelectorA: () => 20})(), 40);
-  assert.is(plugin0.selectors.dependencySelector1(), 20);
 });
