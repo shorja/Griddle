@@ -157,6 +157,10 @@ var Griddle = function (_Component) {
       return p.components;
     })), [userComponents]));
 
+    _this.customComponents = _extends({}, plugins.map(function (p) {
+      return p.customComponents;
+    }));
+
     // NOTE this goes on the context which for the purposes of breaking out the 
     // 'core' code into a plugin is somewhat of a problem as it should
     // be associated with the core code not general griddle code.
@@ -258,6 +262,7 @@ var Griddle = function (_Component) {
     value: function getChildContext() {
       return {
         components: this.components,
+        customComponents: this.customComponents,
         settingsComponentObjects: this.settingsComponentObjects,
         events: this.events,
         selectors: this.selectors,
