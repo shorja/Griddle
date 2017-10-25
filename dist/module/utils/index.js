@@ -28,6 +28,10 @@ var _selectorUtils = require('./selectorUtils');
 
 var selectorUtils = _interopRequireWildcard(_selectorUtils);
 
+var _valueUtils = require('./valueUtils');
+
+var valueUtils = _interopRequireWildcard(_valueUtils);
+
 var _griddleConnect = require('./griddleConnect');
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -39,5 +43,6 @@ exports.default = {
   rowUtils: rowUtils,
   sortUtils: sortUtils,
   connect: _griddleConnect.connect,
-  selectorUtils: selectorUtils
+  selectorUtils: selectorUtils,
+  valueUtils: valueUtils
 };
