@@ -287,6 +287,7 @@ var Griddle = function (_Component) {
 
 Griddle.childContextTypes = {
   components: _propTypes2.default.object.isRequired,
+  customComponents: _propTypes2.default.object.isRequired,
   settingsComponentObjects: _propTypes2.default.object,
   events: _propTypes2.default.object,
   selectors: _propTypes2.default.object,

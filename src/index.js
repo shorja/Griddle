@@ -29,6 +29,7 @@ import CorePlugin from './plugins/core';
 class Griddle extends Component {
   static childContextTypes = {
     components: PropTypes.object.isRequired,
+    customComponents: PropTypes.object.isRequired,
     settingsComponentObjects: PropTypes.object,
     events: PropTypes.object,
     selectors: PropTypes.object,
