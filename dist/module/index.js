@@ -102,8 +102,7 @@ var Griddle = function (_Component) {
       return _this.props.storeKey || Griddle.storeKey || 'store';
     };
 
-    var _props$baselinePlugin = props.baselinePlugin,
-        baselinePlugin = _props$baselinePlugin === undefined ? _core2.default : _props$baselinePlugin,
+    var baselinePlugin = props.baselinePlugin,
         _props$plugins = props.plugins,
         plugins = _props$plugins === undefined ? [] : _props$plugins,
         data = props.data,
@@ -127,17 +126,20 @@ var Griddle = function (_Component) {
         listeners = _props$listeners === undefined ? {} : _props$listeners,
         userInitialState = _objectWithoutProperties(props, ['baselinePlugin', 'plugins', 'data', 'children', 'events', 'sortProperties', 'styleConfig', 'pageProperties', 'components', 'renderProperties', 'settingsComponentObjects', 'storeKey', 'reduxMiddleware', 'listeners']);
 
-    if (baselinePlugin !== _core2.default) {
-      console.log("using CorePlugin");
-    } else {
+    var blPlugin = void 0;
+    if (baselinePlugin) {
       console.log("using user provided baseline plugin");
+      blPlugin = baselinePlugin;
+    } else {
+      console.log("using CorePlugin");
+      blPlugin = _core2.default;
     }
-    switch (typeof baselinePlugin === 'undefined' ? 'undefined' : _typeof(baselinePlugin)) {
+    switch (typeof blPlugin === 'undefined' ? 'undefined' : _typeof(blPlugin)) {
       case 'function':
-        plugins.unshift(baselinePlugin(props));
+        plugins.unshift(blPlugin(props));
         break;
       case 'object':
-        plugins.unshift(baselinePlugin);
+        plugins.unshift(blPlugin);
         break;
     };
 

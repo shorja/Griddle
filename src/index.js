@@ -41,7 +41,7 @@ class Griddle extends Component {
     super(props);
 
     const {
-      baselinePlugin=CorePlugin,
+      baselinePlugin,
       plugins=[],
       data,
       children:rowPropertiesComponent,
@@ -58,17 +58,20 @@ class Griddle extends Component {
       ...userInitialState
     } = props;
 
-    if (baselinePlugin !== CorePlugin) {
-      console.log("using CorePlugin");
-    } else {
+    let blPlugin;
+    if (baselinePlugin) {
       console.log("using user provided baseline plugin");
+      blPlugin = baselinePlugin;
+    } else {
+      console.log("using CorePlugin");
+      blPlugin = CorePlugin;
     }
-    switch(typeof baselinePlugin) {
+    switch(typeof blPlugin) {
       case 'function':
-        plugins.unshift(baselinePlugin(props));
+        plugins.unshift(blPlugin(props));
         break;
       case 'object':
-        plugins.unshift(baselinePlugin);
+        plugins.unshift(blPlugin);
         break;
     };
 
