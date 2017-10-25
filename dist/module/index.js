@@ -127,6 +127,11 @@ var Griddle = function (_Component) {
         listeners = _props$listeners === undefined ? {} : _props$listeners,
         userInitialState = _objectWithoutProperties(props, ['baselinePlugin', 'plugins', 'data', 'children', 'events', 'sortProperties', 'styleConfig', 'pageProperties', 'components', 'renderProperties', 'settingsComponentObjects', 'storeKey', 'reduxMiddleware', 'listeners']);
 
+    if (baselinePlugin !== _core2.default) {
+      console.log("using CorePlugin");
+    } else {
+      console.log("using user provided baseline plugin");
+    }
     switch (typeof baselinePlugin === 'undefined' ? 'undefined' : _typeof(baselinePlugin)) {
       case 'function':
         plugins.unshift(baselinePlugin(props));

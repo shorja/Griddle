@@ -58,6 +58,11 @@ class Griddle extends Component {
       ...userInitialState
     } = props;
 
+    if (baselinePlugin !== CorePlugin) {
+      console.log("using CorePlugin");
+    } else {
+      console.log("using user provided baseline plugin");
+    }
     switch(typeof baselinePlugin) {
       case 'function':
         plugins.unshift(baselinePlugin(props));
