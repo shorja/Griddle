@@ -35,7 +35,7 @@ docs/html
 
 build/
 lib/
-dist/
+#dist/
 storybook-static/
 
 *.tgz

@@ -90,6 +90,9 @@ function testReducer(state = { count: 1}, action) {
 let testStore = createStore(testReducer);
 
 storiesOf('Griddle main', module)
+  .add('basic', () => {
+    return (<Griddle data={fakeData} />);
+  })
   .add('with local', () => {
     return (
       <Griddle data={fakeData} plugins={[LocalPlugin]}>
