@@ -157,9 +157,9 @@ var Griddle = function (_Component) {
       return p.components;
     })), [userComponents]));
 
-    _this.customComponents = _extends({}, plugins.map(function (p) {
-      return p.customComponents;
-    }));
+    _this.customComponents = plugins.reduce(function (acc, plugin) {
+      return _extends({}, acc, plugin.customComponents);
+    });
 
     // NOTE this goes on the context which for the purposes of breaking out the 
     // 'core' code into a plugin is somewhat of a problem as it should

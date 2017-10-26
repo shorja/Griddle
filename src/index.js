@@ -86,7 +86,7 @@ class Griddle extends Component {
     //this.components = buildGriddleComponents([components, ...plugins.map(p => p.components), userComponents]);
     this.components = buildGriddleComponents([...plugins.map(p => p.components), userComponents]);
 
-    this.customComponents = {...plugins.map(p => p.customComponents)};
+    this.customComponents = plugins.reduce((acc, plugin) => ({...acc, ...plugin.customComponents}));
 
     // NOTE this goes on the context which for the purposes of breaking out the 
     // 'core' code into a plugin is somewhat of a problem as it should
