@@ -53,7 +53,7 @@ var StoreListener = exports.StoreListener = function StoreListener(store) {
 // Adds a listener to the store.
 // Will attempt to remove an existing listener if the name
 // matches that of an existing listener.
-// If no name is provided this is an anonymous lister, it
+// If no name is provided this is an anonymous listener, it
 // is not registered in the list of unsubscribe functions,
 // returns the unsubscribe function so it can still be handled
 // manually if desired.

@@ -207,7 +207,12 @@ var Griddle = function (_Component) {
       pageProperties: pageProperties,
       renderProperties: renderProperties,
       sortProperties: sortProperties,
-      styleConfig: mergedStyleConfig
+      styleConfig: mergedStyleConfig,
+      // this is a hack so that the initializer reducer
+      // can have access to the composed selectors
+      // don't put selectors on the state
+      // also find a better way to do this later
+      selectors: _this.selectors
     }]));
 
     var composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || _redux.compose;

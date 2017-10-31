@@ -128,6 +128,11 @@ class Griddle extends Component {
         renderProperties,
         sortProperties,
         styleConfig: mergedStyleConfig,
+        // this is a hack so that the initializer reducer
+        // can have access to the composed selectors
+        // don't put selectors on the state
+        // also find a better way to do this later
+        selectors: this.selectors
       }
     );
 
