@@ -18,6 +18,8 @@ var _reselect = require('reselect');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var resolve = function resolve(f, resolvedSelectors) {
+  var _f$_options;
+
   var selectors = [];
   f._dependencies.forEach(function (dependency, name) {
     if (typeof name === "string") {
@@ -33,7 +35,7 @@ var resolve = function resolve(f, resolvedSelectors) {
     return selectors.push(func);
   });
   selectors.push(f._selectorFunc);
-  f._selector = _reselect.createSelector.apply(undefined, selectors);
+  f._selector = f._options.customSelectorCreator ? (_f$_options = f._options).customSelectorCreator.apply(_f$_options, selectors) : _reselect.createSelector.apply(undefined, selectors);
   f.resolved = true;
   return f;
 };
@@ -140,7 +142,32 @@ var griddleCreateSelector = function griddleCreateSelector() {
   // on how many selector function args were provided.
   //
   // TODO make sure to check for duplicate dependencies
-  var depArgs = args.slice(0, args.length - 1);
+  var options = undefined;
+  var selectorFunc = undefined;
+  var depArgs = undefined;
+
+  switch (_typeof(args[args.length - 1])) {
+    case 'function':
+      selectorFunc = args[args.length - 1];
+      depArgs = args.slice(0, args.length - 1);
+      break;
+    case 'object':
+      options = args[args.length - 1];
+
+      if (args.length >= 3) {
+        if (typeof args[args.length - 2] === 'function') {
+          selectorFunc = args[args.length - 2];
+          depArgs = args.slice(0, args.length - 2);
+        } else {
+          throw new Error("When providing an options argument, the second last argument must be a function");
+        };
+      } else {
+        throw new Error("Cannot create a selector with final options argument with fewer than 3 arguments, must have at least one dependency, the selector function, and the options object");
+      };
+      break;
+    default:
+      throw new Error("Last argument must be either a function or options argument");
+  }
 
   // selectors need to be functions to preserve the selector
   // calling API, relevant data is stored as props on the
@@ -152,6 +179,8 @@ var griddleCreateSelector = function griddleCreateSelector() {
     return f._selector.apply(f, arguments);
   };
 
+  f._selectorFunc = selectorFunc;
+  f._options = options || {};
   // using Map to preserve order of dependencies
   f.isGriddleCreateSelector = true;
   f._dependencies = new Map();
@@ -172,13 +201,6 @@ var griddleCreateSelector = function griddleCreateSelector() {
       default:
         throw new Error("The first n - 1 arguments of griddleCreateSelector must be either strings or functions");
     }
-  }
-
-  // The last of n args is the selector function,
-  // it must be a function
-  f._selectorFunc = args[args.length - 1];
-  if (typeof f._selectorFunc !== "function") {
-    throw new Error("Last argument must be a function");
   }
 
   f._selector = function () {

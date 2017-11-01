@@ -15,7 +15,7 @@ const resolve = (f, resolvedSelectors) => {
 
   f._dependencies.forEach((func) => selectors.push(func));
   selectors.push(f._selectorFunc);
-  f._selector = createSelector(...selectors);
+  f._selector = f._options.customSelectorCreator ? f._options.customSelectorCreator(...selectors) : createSelector(...selectors);
   f.resolved = true;
   return f;
 }
@@ -111,7 +111,32 @@ const griddleCreateSelector = (...args) => {
   // on how many selector function args were provided.
   //
   // TODO make sure to check for duplicate dependencies
-  const depArgs = args.slice(0, args.length - 1);
+  let options = undefined;
+  let selectorFunc = undefined;
+  let depArgs = undefined;
+
+  switch(typeof args[args.length - 1]) {
+    case 'function':
+      selectorFunc = args[args.length - 1];
+      depArgs = args.slice(0, args.length - 1);
+      break;
+    case 'object':
+      options = args[args.length - 1];
+
+      if (args.length >= 3) {
+        if (typeof args[args.length - 2] === 'function') {
+          selectorFunc = args[args.length - 2];
+          depArgs = args.slice(0, args.length - 2);
+        } else {
+          throw new Error("When providing an options argument, the second last argument must be a function");
+        };
+      } else {
+        throw new Error("Cannot create a selector with final options argument with fewer than 3 arguments, must have at least one dependency, the selector function, and the options object");
+      };
+      break;
+    default:
+      throw new Error("Last argument must be either a function or options argument");
+  }
 
   // selectors need to be functions to preserve the selector
   // calling API, relevant data is stored as props on the
@@ -123,6 +148,8 @@ const griddleCreateSelector = (...args) => {
     return f._selector(...args);
   };
 
+  f._selectorFunc = selectorFunc;
+  f._options = options || {};
   // using Map to preserve order of dependencies
   f.isGriddleCreateSelector = true;
   f._dependencies = new Map();
@@ -143,13 +170,6 @@ const griddleCreateSelector = (...args) => {
       default:
         throw new Error("The first n - 1 arguments of griddleCreateSelector must be either strings or functions");
     }
-  }
-
-  // The last of n args is the selector function,
-  // it must be a function
-  f._selectorFunc = args[args.length - 1];
-  if (typeof f._selectorFunc !== "function") {
-    throw new Error("Last argument must be a function");
   }
 
   f._selector = (...args) => undefined;

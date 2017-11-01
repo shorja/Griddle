@@ -1,4 +1,6 @@
 import test from 'ava';
+import { memoize } from 'lodash';
+import { createSelectorCreator } from 'reselect';
 
 import {
   createSelector,
@@ -13,8 +15,8 @@ test('createSelector with only 1 argument should throw an Error', (t) => {
   }, Error);
 });
 
-test('createSelector with final results function arg not of function type', (assert) => {
-  const error = assert.throws(() => {
+test('createSelector with final results function arg not of function or object type', (t) => {
+  const error = t.throws(() => {
     createSelector(
       "someDependency",
       "badResultFunctionStringArg"
@@ -30,6 +32,37 @@ test('createSelector with a non string or function argument for one of the first
     );
   }, Error);
 });
+
+test('createSelector with an object for the last argument but fewer than 3 arguments', (t) => {
+  const error = t.throws(() => {
+    createSelector(
+      () => 42,
+      {}
+    )
+  }, Error);
+});
+
+test('createSelector with a non object argument for the last argument when the first n-2 args are either strings or funcs and arg n - 1 is a function', (t) => {
+  const error = t.throws(() => {
+    createSelector(
+      () => 42,
+      (x) => x,
+      'doof'
+    );
+  }, Error);
+});
+
+test('createSelector with arg n being the options arg, arg n - 1 being the selector function but any of args 0 -> n - 2 being neither a function or string', (t) => {
+  const error = t.throws(() => {
+    createSelector(
+      {},
+      () => 42,
+      (x) => x,
+      {}
+    );
+  }, Error);
+});
+
 
 test('createSelector, 1 selector function arg, create only', (assert) => {
   const selector = createSelector(
@@ -50,6 +83,8 @@ test('createSelector, 1 selector function arg, create only', (assert) => {
   // 'private' API
   assert.is(typeof selector._dependencies, "object");
   assert.is(typeof selector._selector, "function");
+  assert.is(typeof selector._options, 'object');
+  assert.is(Object.getOwnPropertyNames(selector._options).length, 0);
 
   // unresolved selector should return undefined when called
   assert.is(selector(), undefined);
@@ -90,6 +125,8 @@ test('createSelector, 1 selector dependency, create only', (assert) => {
   // 'private' API
   assert.is(typeof selector._dependencies, "object");
   assert.is(typeof selector._selector, "function");
+  assert.is(typeof selector._options, 'object');
+  assert.is(Object.getOwnPropertyNames(selector._options).length, 0);
 
   // unresolved selector should return undefined
   assert.is(selector(), undefined);
@@ -131,6 +168,8 @@ test('createSelector, 1 function dependency, 1 selector dependency, create only'
 
   t.is(typeof selector._dependencies, "object");
   t.is(typeof selector._selector, "function");
+  t.is(typeof selector._options, 'object');
+  t.is(Object.getOwnPropertyNames(selector._options).length, 0);
 
   t.is(selector(), undefined);
 });
@@ -151,6 +190,60 @@ test('createSelector, 1 function dependency, 1 selector dependency, create, reso
   t.is(typeof selector, "function");
   t.is(selector.resolved, true);
   t.is(selector(), 40);
+});
+
+test('createSelector, 1 string dep, with options, create only', (t) => {
+
+
+  const customSelectorCreator = createSelectorCreator(
+    memoize,
+    // from reselect README
+    // https://github.com/reactjs/reselect#use-memoize-function-from-lodash-for-an-unbounded-cache
+    // also see lodash memoize documentation
+    // https://lodash.com/docs/4.17.4#memoize
+    //
+    // this function creates a unique key for a given set of inputs which memoize uses
+    // to store the results for that set of inputs
+    (...args) => args.reduce((acc, val) => 
+      (acc + '-' + JSON.stringify(val)), '')
+  );
+  let totalRuns = 0;
+  const state = {a: 10, b: 20}
+  const resolvedDependencies= {
+    getState: (state) => (state),
+    mapKeyFromProps: (s, props) => (props.key)
+  }
+  const selector = createSelector(
+    'getState',
+    'mapKeyFromProps',
+    (state, key) => {
+      totalRuns++;
+      return state[key];
+    },
+    {customSelectorCreator}
+  );
+
+  selector.resolve(resolvedDependencies);
+
+  t.is(selector(state, {key: 'a'}), 10);
+  t.is(totalRuns, 1);
+  // memoized result, run with the same args should
+  // return the same results
+  t.is(selector(state, {key: 'a'}), 10);
+  t.is(totalRuns, 1);
+
+  t.is(selector(state, {key: 'b'}), 20);
+  t.is(totalRuns, 2);
+
+  t.is(selector(state, {key: 'b'}), 20);
+  t.is(totalRuns, 2);
+
+  t.is(selector(state, {key: 'a'}), 10);
+  t.is(totalRuns, 2);
+
+  t.is(selector(state, {key: 'b'}), 20);
+  t.is(totalRuns, 2);
+
 });
 
 test('createSelector, 1 selector dependency, create, resolve with invalid dependencies', (t) => {
